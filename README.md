@@ -7,10 +7,10 @@ This generates arrays of hexadecimal tile IDs*, that can be loaded directly into
 
 <sub>* Blank tiles are defaulted to $0000</sub>
 
-### Regular backgrounds
-Strictly speaking, valid map sizes for regular backgrounds are 32x32, 64x32, 32x64 and 64x64. However, this extension allows you to export maps of any size as long as the width and height are a multiple of 32.
+### Valid backgrounds
+**This plugin currently assumes the map is composed of 16x16 tiles.  The addressing of 8x8 tiles differs and may be supported in a future update.**
 
-####This plugin currently assumes the map is composed of 16x16 tiles.  The addressing of 8x8 tiles differs and may be supported in a future update.
+Strictly speaking, valid map sizes for regular backgrounds are 32x32, 64x32, 32x64 and 64x64. However, this extension allows you to export maps of any size as long as the width and height are a multiple of 32.
 
 Each tile layer is parsed in 32x32 chunks - a "screenblock".  Multiple layers are exported together in a single file consecutively.
 
