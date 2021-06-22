@@ -20,7 +20,7 @@
  *                         +---+
  *
  * This tool was adapted from the GBA Plugin that is Copyright (c) 2020 Jay van Hutten
- * This SNES version is Copyright (c) 2021 to NESDev forum user Khaz 
+ * This SNES version is Copyright (c) 2021 @KhazWolf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
