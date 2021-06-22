@@ -1,16 +1,11 @@
 /*
- * tiled-to-gba-export.js
+ * tiled-to-SNES-export.js
  *
- * This extension adds the "GBA source files - regular" type to the "Export As" menu,
- * which generates tile arrays that can be loaded directly into GBA VRAM for
- * use as regular (not affine) tiled backgrounds.
- *
- * Valid map sizes for GBA are 32x32, 64x32, 32x64 and 64x64, but this extension
- * allows you to export maps of any size as long as the width and height are a
- * mulitple of 32.
+ * This extension adds the "SNES source files" type to the "Export As" menu,
+ * which generates tile arrays that can be loaded directly into WLA as an "include"
  * 
- * Each tile layer is parsed in 32x32 chunks (a screenblock on GBA) and converted
- * to a C array of hexadecimal tile IDs - blank tiles are defaulted to 0x0000.
+ * Each tile layer is parsed in 32x32 chunks and converted to an array of
+ * hexadecimal tile IDs - blank tiles are defaulted to $0000.
  * For example, 64x64 maps are parsed as four screenblocks like this:
  *
  *                        Array 1
@@ -24,7 +19,8 @@
  *                         | 3 |
  *                         +---+
  *
- * Copyright (c) 2020 Jay van Hutten
+ * This tool was adapted from the GBA Plugin that is Copyright (c) 2020 Jay van Hutten
+ * This SNES version is Copyright (c) 2021 to NESDev forum user Khaz 
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -54,12 +50,12 @@ function decimalToHex(p_decimal, p_padding) {
         .toUpperCase()
         .padStart(p_padding, "0");
 
-    return "0x"+hexValue;
+    return "$"+hexValue;
 }
 
 var customMapFormat = {
-    name: "GBA source files - regular",
-    extension: "c *.h",
+    name: "SNES source files",
+    extension: "inc",
     write:
 
     function(p_map, p_fileName) {
@@ -70,7 +66,7 @@ var customMapFormat = {
             return "Export failed: Invalid map size! Map width and height must be a multiple of 32.";
         }
 
-        // Standard screenblock size for GBA
+        // Standard screenblock size for SNES
         const SCREENBLOCKWIDTH = 32;
         const SCREENBLOCKHEIGHT = 32;
 
@@ -83,26 +79,14 @@ var customMapFormat = {
 
         var tilemapLength = p_map.width * p_map.height;
 
-        var headerFileData = "";
-        headerFileData += "#ifndef "+fileBaseName.toUpperCase()+"_H\n";
-        headerFileData += "#define "+fileBaseName.toUpperCase()+"_H\n\n";
-        headerFileData += "#define "+fileBaseName.toUpperCase()+"_WIDTH  ("+p_map.width+")\n";
-        headerFileData += "#define "+fileBaseName.toUpperCase()+"_HEIGHT ("+p_map.height+")\n";
-        headerFileData += "#define "+fileBaseName.toUpperCase()+"_LENGTH ("+tilemapLength+")\n\n";
-
         var sourceFileData = "";
-        sourceFileData += "#include \""+fileBaseName+".h\"\n\n";
+        sourceFileData += fileBaseName+":\n";
 
         for (let i = 0; i < p_map.layerCount; ++i) {
             let currentLayer = p_map.layerAt(i);
 
             // Replace special characters for an underscore
             let currentLayerName = currentLayer.name.replace(/[^a-zA-Z0-9-_]/g, "_");
-
-            headerFileData += "extern const unsigned short "+currentLayerName+"["+tilemapLength+"];\n";
-
-            sourceFileData += "const unsigned short "+currentLayerName+"["+tilemapLength+"] __attribute__((aligned(4))) =\n";
-            sourceFileData += "{\n";
 
             let screenBlockCountX = currentLayer.width/SCREENBLOCKWIDTH;
             let screenBlockCountY = currentLayer.height/SCREENBLOCKHEIGHT;
@@ -111,12 +95,11 @@ var customMapFormat = {
             if (currentLayer.isTileLayer) {
                 for (let j = 0; j < screenBlockCountY; ++j) {
                     for (let k = 0; k < screenBlockCountX; ++k) {
-                        sourceFileData +="    // Screenblock "+screenBlockID+"\n";
+                        sourceFileData +=";Layer "+(i+1)+" Screenblock "+screenBlockID+"\n";
                         screenBlockID++;
 
                         for (let y = 0; y < SCREENBLOCKHEIGHT; ++y) {
-                            // Indent array rows
-                            sourceFileData += "    ";
+                            sourceFileData += ".dw ";
 
                             for (let x = 0; x < SCREENBLOCKWIDTH; ++x) {
                                 let currentTileX = x+(SCREENBLOCKWIDTH*k);
@@ -124,54 +107,48 @@ var customMapFormat = {
                                 let currentTile = currentLayer.cellAt(currentTileX, currentTileY);
                                 var currentTileID = currentTile.tileId;
 
-                                // Default to 0x0000 for blank tiles
+                                // Default to $0000 for blank tiles
                                 if (currentTileID == "-1") {
-                                    sourceFileData += "0x0000, ";
-                                } else {
+                                    sourceFileData += "$0000, ";
+                                } else { 
+                                    currentTileID = (currentTileID << 1)
+
+                                    // correct for each row of tiles being 2 rows in snes format addressing
+                                    let currentTileTemp = ~~(currentTileID/16)
+                                    currentTileID = currentTileID+(currentTileTemp*16)
+
                                     if (currentTile.flippedHorizontally) {
                                         // Set the HFLIP bit for this screen entry
-                                        currentTileID |= (1 << 10);
+                                        currentTileID |= (1 << 14);
                                     }
                                     if (currentTile.flippedVertically) {
                                         // Set the VFLIP bit for this screen entry
-                                        currentTileID |= (1 << 11);
+                                        currentTileID |= (1 << 15);
                                     }
 
                                     sourceFileData += decimalToHex(currentTileID, 4)+", ";
                                 }
                             }
 
-                            sourceFileData += "\n";
+                            // Remove the last comma
+                            sourceFileData = sourceFileData.slice(0,-2)+"\n";
                         }
-
-                        sourceFileData += "\n";
                     }
                 }
             }
-
-            // Remove the last comma and close the array.
-            sourceFileData = sourceFileData.slice(0,-3)+"\n};\n\n";
         }
-
-        headerFileData += "\n#endif\n";
 
         // Remove the second newline at the end of the source file
         sourceFileData = sourceFileData.slice(0,-1);
 
-        // Write header data to disk
-        var headerFile = new TextFile(filePath+fileBaseName+".h", TextFile.WriteOnly);
-        headerFile.write(headerFileData);
-        headerFile.commit();
-        console.log("Tilemap exported to "+filePath+fileBaseName+".h");
-
         // Write source data to disk
-        var sourceFile = new TextFile(filePath+fileBaseName+".c", TextFile.WriteOnly);
+        var sourceFile = new TextFile(filePath+fileBaseName+".inc", TextFile.WriteOnly);
         sourceFile.write(sourceFileData);
         sourceFile.commit();
-        console.log("Tilemap exported to "+filePath+fileBaseName+".c");
+        console.log("Tilemap exported to "+filePath+fileBaseName+".inc");
 
         console.timeEnd("Export completed in");
     }
 }
 
-tiled.registerMapFormat("gba", customMapFormat)
+tiled.registerMapFormat("SNES", customMapFormat)
