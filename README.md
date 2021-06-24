@@ -1,15 +1,14 @@
 # Tiled to SNES export
 This is an export plugin for the [Tiled map editor](https://www.mapeditor.org/) that adds the following type to the "Export As" menu:
 
-* SNES source files - regular (*.inc)
+* SNES source file (16x16) (*.inc)
+* SNES source file (8x8) (*.inc)
 
 This generates arrays of hexadecimal tile IDs*, that can be loaded directly into a SNES compiler for use as tiled backgrounds.
 
 <sub>* Blank tiles are defaulted to $0000</sub>
 
 ## Valid backgrounds
-**This plugin currently assumes the map is composed of 16x16 tiles.  The addressing of 8x8 tiles differs and may be supported in a future update.**
-
 Strictly speaking, valid map sizes for regular backgrounds are 32x32, 64x32, 32x64 and 64x64. However, this extension allows you to export maps of any size as long as the width and height are a multiple of 32.
 
 Each tile layer is parsed in 32x32 chunks - a "screenblock".  Multiple layers are exported together in a single file consecutively.
@@ -19,7 +18,7 @@ This extension requires Tiled 1.4 or newer. Get the latest version [here](https:
 
 To add this extension to your Tiled installation:
 * Open Tiled and go to Edit > Preferences > Plugins and click the "Open" button to open the extensions directory.
-* Download [tiled-to-SNES-export.js](https://raw.githubusercontent.com/KhazWolf/tiled-to-gba-export/master/tiled-to-SNES-export.js) in this repository and copy it to that location. The scripts can be placed either directly in the extensions directory or in a subdirectory.
+* Download [tiled-to-SNES-export-16.js](https://raw.githubusercontent.com/KhazWolf/tiled-to-SNES-export/master/tiled-to-SNES-export-16.js) and [tiled-to-SNES-export-8.js](https://raw.githubusercontent.com/KhazWolf/tiled-to-SNES-export/master/tiled-to-SNES-export-8.js) in this repository and copy them to that location. The scripts can be placed either directly in the extensions directory or in a subdirectory.
 
 ## Output
 The export plugins generate an .inc text file formatted to be compatible with the WLA-DX 65816 compiler
@@ -61,4 +60,4 @@ etc.
 ```
 
 ## License
-This work is licensed under the MIT License. See [LICENSE](https://raw.githubusercontent.com/KhazWolf/tiled-to-gba-export/master/LICENSE) for details.
+This work is licensed under the MIT License. See [LICENSE](https://raw.githubusercontent.com/KhazWolf/tiled-to-SNES-export/master/LICENSE) for details.
