@@ -1,5 +1,5 @@
 /*
- * tiled-to-SNES-export.js
+ * tiled-to-SNES-export-8.js
  *
  * This extension adds the "SNES source files" type to the "Export As" menu,
  * which generates tile arrays that can be loaded directly into WLA as an "include"
@@ -44,6 +44,7 @@
 
 /* global FileInfo, TextFile, tiled */
 
+
 function decimalToHex(p_decimal, p_padding) {
     var hexValue = (p_decimal)
         .toString(16)
@@ -54,7 +55,7 @@ function decimalToHex(p_decimal, p_padding) {
 }
 
 var customMapFormat = {
-    name: "SNES source files",
+    name: "SNES source file (8x8)",
     extension: "inc",
     write:
 
@@ -111,12 +112,6 @@ var customMapFormat = {
                                 if (currentTileID == "-1") {
                                     sourceFileData += "$0000, ";
                                 } else { 
-                                    currentTileID = (currentTileID << 1)
-
-                                    // correct for each row of tiles being 2 rows in snes format addressing
-                                    let currentTileTemp = ~~(currentTileID/16)
-                                    currentTileID = currentTileID+(currentTileTemp*16)
-
                                     if (currentTile.flippedHorizontally) {
                                         // Set the HFLIP bit for this screen entry
                                         currentTileID |= (1 << 14);
@@ -151,4 +146,4 @@ var customMapFormat = {
     }
 }
 
-tiled.registerMapFormat("SNES", customMapFormat)
+tiled.registerMapFormat("SNES 8", customMapFormat)
